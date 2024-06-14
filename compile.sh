@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
-as ./pong.s -o ./pong.o
-gcc -o ./pong -nostdlib -static ./pong.o
+set -e
+
+nasm -f elf64 ./pong.asm -o ./pong.o
+ld ./pong.o -o ./pong
