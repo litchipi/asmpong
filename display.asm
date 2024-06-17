@@ -22,7 +22,7 @@ print_number:
         cmp rax, 10
         jl print_number_loop_end
 print_number_loop:
-        add r8, 1
+        inc r8
         mov rdx, 0
 
         mov ecx, 10
@@ -32,7 +32,7 @@ print_number_loop:
         cmp eax, 10
         jge print_number_loop
 print_number_loop_end:
-        add r8, 1
+        inc r8
         push rax
 print_number_ascii_print_loop:
         pop rdx

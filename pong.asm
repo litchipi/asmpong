@@ -19,7 +19,7 @@ update_position:
         cmp rax, 1
         jl update_position_negative
 update_position_positive:
-        add rbx, 1
+        inc rbx
         ret
 update_position_negative:
         sub rbx, 1
