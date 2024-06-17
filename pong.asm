@@ -1,19 +1,11 @@
 %include 'display.asm'
 
-section .bss
-        ball: resb 2        ; [ x, y ]
-        direction: resb 2   ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
+section .data
+        ball: db 5, 15        ; [ x, y ]
+        direction: db 1, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
 
 section .text
 global _start
-
-init_game_values:
-        mov byte [ ball ], 5
-        mov byte [ ball + 1 ], 15
-
-        mov byte [ direction ], 1
-        mov byte [ direction + 1], 0
-        ret
 
 update_position:
         cmp rax, 1
@@ -79,7 +71,6 @@ draw_screen:
 _start:
 init_game:
         call reset
-        call init_game_values
         mov r10, 4
 game_loop:
         call update_game
