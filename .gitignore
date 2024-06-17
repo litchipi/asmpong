@@ -1,5 +1,5 @@
 *
 !*.md
 !.gitignore
-!*.s
+!*.asm
 !compile.sh
