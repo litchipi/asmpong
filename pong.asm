@@ -1,10 +1,42 @@
 %include 'display.asm'
 
 section .bss
-        ball: resb 2
+        ball: resb 2        ; [ x, y ]
+        direction: resb 2   ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
 
 section .text
 global _start
+
+init_game_values:
+        mov byte [ ball ], 5
+        mov byte [ ball + 1 ], 15
+
+        mov byte [ direction ], 1
+        mov byte [ direction + 1], 0
+        ret
+
+update_position:
+        cmp rax, 1
+        jl update_position_negative
+update_position_positive:
+        add rbx, 1
+        ret
+update_position_negative:
+        sub rbx, 1
+        ret
+
+update_game:
+        mov al, [ direction + 1 ]
+        mov bl, [ ball ]
+        call update_position
+        mov byte [ ball ], bl
+
+        mov al, [ direction ]
+        mov bl, [ ball + 1 ]
+        call update_position
+        mov byte [ ball + 1], bl
+
+        ret
 
 draw_wall:
         sub rax, 1
@@ -18,7 +50,7 @@ draw_wall:
         ret
 
 draw_screen:
-        call clear
+        ; call clear
 
         ; Draw top wall
         mov al, 1
@@ -47,11 +79,14 @@ draw_screen:
 _start:
 init_game:
         call reset
-
-        mov byte [ ball ], 5
-        mov byte [ ball + 1 ], 15
+        call init_game_values
+        mov r10, 4
 game_loop:
+        call update_game
         call draw_screen
+        sub r10, 1
+        cmp r10, 1
+        jge game_loop
 
 exit_program:
         call reset
