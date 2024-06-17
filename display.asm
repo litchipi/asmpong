@@ -18,6 +18,11 @@ print:
 
 ; Prints each digits of a number in ASCII (arg in rax)
 print_number:
+        push r8
+        push rdx
+        push rcx
+        push rsi
+
         mov r8, 0
         cmp rax, 10
         jl print_number_loop_end
@@ -47,6 +52,11 @@ print_number_ascii_print_loop:
         cmp r8, 1
         jge print_number_ascii_print_loop
 
+        pop rsi
+        pop rcx
+        pop rdx
+        pop r8
+
         ret
 
 ; Sets the style of next messages using ANSI codes
@@ -72,6 +82,9 @@ style:
 
 ; Move the cursor to X at rax, and Y to rbx
 move_cursor:
+        push rdx
+        push rsi
+
         mov rdx, 2
         mov rsi, CSI
         call print
@@ -89,6 +102,8 @@ move_cursor:
         mov rsi, char_disp
         call print
 
+        pop rsi
+        pop rdx
         ret
 
 ; Reset the style of the terminal
@@ -101,6 +116,11 @@ reset:
 
 ; Clears the screen of the terminal
 clear:
+        push rax
+        push rbx
+        push rdx
+        push rsi
+
         mov rax, 1
         mov rbx, 1
         call move_cursor
@@ -115,6 +135,23 @@ clear:
         mov byte [ char_disp ], 'J'
         mov rsi, char_disp
         call print
+
+        pop rax
+        pop rbx
+        pop rdx
+        pop rsi
+        ret
+
+newline:
+        push rdx
+        push rsi
+
+        mov rdx, 2
+        mov rsi, NEWLINE
+        call print
+
+        pop rdx
+        pop rsi
         ret
 
 section .data
