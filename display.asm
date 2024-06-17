@@ -43,7 +43,7 @@ print_number_ascii_print_loop:
         mov rdx, 1
         call print
 
-        sub r8, 1
+        dec r8
         cmp r8, 1
         jge print_number_ascii_print_loop
 

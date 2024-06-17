@@ -22,7 +22,7 @@ update_position_positive:
         inc rbx
         ret
 update_position_negative:
-        sub rbx, 1
+        dec rbx
         ret
 
 update_game:
@@ -39,7 +39,7 @@ update_game:
         ret
 
 draw_wall:
-        sub rax, 1
+        dec rax
 
         mov rdx, 1
         mov rsi, WALL_CHAR
@@ -84,7 +84,7 @@ init_game:
 game_loop:
         call update_game
         call draw_screen
-        sub r10, 1
+        dec r10
         cmp r10, 1
         jge game_loop
 
