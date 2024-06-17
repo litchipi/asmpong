@@ -11,7 +11,7 @@ section .rodata
         BALL_CHAR db 'x'
         WALL_CHAR db "#"
 
-        message db "Hello, World!\n"
+        message db "Hello, World!", 0Dh, 0Ah
         message_len equ $ - message
 
 section .text
@@ -84,14 +84,26 @@ timer_handler:
         call print
         ret
 
+wait_forever:
+        mov rax, 34
+        syscall
+
+        mov rdx, message_len
+        mov rsi, message
+        call print
+
+        jmp wait_forever
+
 _start:
 init_game:
-        call reset
+        ; call reset
 
-        ; mov rax, 1
-        ; mov rbx, 0
-        ; mov rcx, [ timer_handler ]
-        ; call start_timer
+        mov rax, 1
+        mov rbx, 0
+        mov rcx, [ timer_handler ]
+        call start_timer
+        call wait_forever
+
         mov r10, 4
 game_loop:
         call update_game

@@ -23,9 +23,14 @@ sighandler:
 ;  rbx stores the number of nanoseconds
 ;  rcx stores the handler
 start_timer:
-        push rax
-        push rbx
-        push rcx
+        push r8
+        push r9
+        push rdx
+        push rdi
+        push rsi
+
+        mov r8, rax
+        mov r9, rbx
 
         ; Create a timer
         mov [ sigev_value ], rcx
@@ -35,25 +40,25 @@ start_timer:
         mov rdx, [ timerid ]
         syscall                      ; Call kernel
 
-        mov rax, rdx
+        mov rax, 223
+        mov rdi, rdx
+        mov rsi, 0
+        mov [ it_interval_sec ], r8
+        mov [ it_value_sec ], r8
+        mov [ it_interval_nsec ], r9
+        mov [ it_value_nsec ], r9
+        mov rdx, [ itimerspec ]
+        mov rdx, 0
+        syscall
+
+        mov rax, timerid
         call print_number
 
-        ; lea rdi, [clockid]           ; CLOCK_REALTIME (0)
-        ; lea rsi, [sigevent]          ; Pointer to sigevent structure
-        ; lea rdx, [timerid]           ; Pointer to store timer ID
-        ; mov rax, 222                 ; sys_timer_create syscall number
-
-        ; ; Set the timer
-        ; mov rdi, [timerid]           ; Timer ID
-        ; mov rsi, 0                   ; No flags
-        ; lea rdx, [itimerspec]        ; Pointer to itimerspec structure
-        ; mov r10, 0                   ; Old itimerspec (optional, not used)
-        ; mov rax, 223                 ; sys_timer_settime syscall number
-        ; syscall                      ; Call kernel
-
-        pop rcx
-        pop rbx
-        pop rax
+        pop rsi
+        pop rdi
+        pop rdx
+        pop r9
+        pop r8
         ret
 
 ; STRUC sa_struct
@@ -72,7 +77,7 @@ start_timer:
 
 section .data
         clockid dd 0x0               ; CLOCK_REALTIME (0)
-        timerid dw 0                 ; Buffer to store the timer ID
+        timerid dd 0                 ; Buffer to store the timer ID
 
 data_sigevent:
         sigev_notify dd 1            ; SIGEV_SIGNAL (1)
@@ -81,3 +86,9 @@ data_sigevent:
         sigev_notify_function dd sighandler
         sigev_notify_attributes dd 0
         sigev_notify_thread_id dd 0
+
+itimerspec:
+        it_interval_sec dq 0
+        it_interval_nsec dq 0
+        it_value_sec dq 0
+        it_value_nsec dq 0
