@@ -1,3 +1,6 @@
+section .bss
+        char_disp: resb 1
+
 section .text
 
 ; Prints message on rcx, with length on rdx
@@ -35,42 +38,34 @@ print_number_ascii_print_loop:
         pop rdx
 
         add rdx, 48
-        mov qword [ char_disp ], rdx
+        mov byte [ char_disp ], dl
         mov rsi, char_disp
+        mov rdx, 1
         call print
 
         sub r8, 1
         cmp r8, 1
         jge print_number_ascii_print_loop
 
-        mov rdx, 2
-        mov rsi, NEWLINE
-        call print
-
         ret
 
 ; Sets the style of next messages using ANSI codes
-; TODO IMPORTANT            Make codes > 10 possible with better numbering management
+; See https://en.wikipedia.org/wiki/ANSI_escape_code (SGR section)
+; In rax, got the number of the style to apply
 style:
         push rdx
         push rsi
-        push rax
 
         mov rdx, 2
         mov rsi, CSI
         call print
 
-        mov rdx, 1
-        add rax, 48
-        mov qword [ char_disp ], rax
+        call print_number
+
+        mov byte [ char_disp ], 'm'
         mov rsi, char_disp
         call print
 
-        mov qword [ char_disp ], 'm'
-        mov rsi, char_disp
-        call print
-
-        pop rax
         pop rsi
         pop rdx
         ret
@@ -81,25 +76,45 @@ move_cursor:
         mov rsi, CSI
         call print
 
-        mov rdx, 1
-        add rbx, 48
-        mov qword [ char_disp ], rbx
+        call print_number
+
+        mov byte [ char_disp ], ';'
         mov rsi, char_disp
         call print
 
-        mov qword [ char_disp ], ';'
+        mov rax, rbx
+        call print_number
+
+        mov byte [ char_disp ], 'H'
         mov rsi, char_disp
         call print
 
-        add rax, 48
-        mov qword [ char_disp ], rax
-        mov rsi, char_disp
+        ret
+
+; Reset the style of the terminal
+reset:
+        push rax
+        mov rax, 0
+        call style
+        pop rax
+        ret
+
+; Clears the screen of the terminal
+clear:
+        mov rax, 1
+        mov rbx, 1
+        call move_cursor
+
+        mov rdx, 2
+        mov rsi, CSI
         call print
 
-        mov qword [ char_disp ], 'H'
+        mov rax, 2
+        call print_number
+
+        mov byte [ char_disp ], 'J'
         mov rsi, char_disp
         call print
-
         ret
 
 section .data
