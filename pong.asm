@@ -1,3 +1,4 @@
+%include 'timer.asm'
 %include 'display.asm'
 
 section .data
@@ -9,6 +10,9 @@ section .rodata
         screen_height equ 10
         BALL_CHAR db 'x'
         WALL_CHAR db "#"
+
+        message db "Hello, World!\n"
+        message_len equ $ - message
 
 section .text
 global _start
@@ -74,9 +78,20 @@ draw_screen:
 
         ret
 
+timer_handler:
+        mov rdx, message_len
+        mov rsi, message
+        call print
+        ret
+
 _start:
 init_game:
         call reset
+
+        ; mov rax, 1
+        ; mov rbx, 0
+        ; mov rcx, [ timer_handler ]
+        ; call start_timer
         mov r10, 4
 game_loop:
         call update_game
