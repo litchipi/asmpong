@@ -13,36 +13,41 @@ print:
         pop rax
         ret
 
-; Prints each digits of a number in ASCII
-; Number in rax
-; TODO   FIXME        IMPORTANT        Fix big number display
+; Prints each digits of a number in ASCII (arg in rax)
 print_number:
         mov r8, 0
+        cmp rax, 10
+        jl print_number_loop_end
 print_number_loop:
         add r8, 1
-        mov edx, 0
+        mov rdx, 0
 
-        mov ecx, 0x10
+        mov ecx, 10
         div ecx
 
         push rdx
         cmp eax, 10
         jge print_number_loop
-        mov edx, 1
 print_number_loop_end:
-        pop rax
-        add eax, 48
-        mov qword [ char_disp ], rax
-        mov esi, char_disp
+        add r8, 1
+        push rax
+print_number_ascii_print_loop:
+        pop rdx
+
+        add rdx, 48
+        mov qword [ char_disp ], rdx
+        mov rsi, char_disp
         call print
+
         sub r8, 1
         cmp r8, 1
-        jge print_number_loop_end
+        jge print_number_ascii_print_loop
+
         mov rdx, 2
         mov rsi, NEWLINE
         call print
-        ret
 
+        ret
 
 ; Sets the style of next messages using ANSI codes
 ; TODO IMPORTANT            Make codes > 10 possible with better numbering management

@@ -7,7 +7,7 @@ section .text
 global _start
 
 _start:
-        mov rax, 11000
+        mov rax, 5
         call print_number
         ; ; Reverse
         ; mov rax, 7
