@@ -4,6 +4,12 @@ section .data
         ball: db 5, 15        ; [ x, y ]
         direction: db 1, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
 
+section .rodata
+        screen_width equ 30
+        screen_height equ 10
+        BALL_CHAR db 'x'
+        WALL_CHAR db "#"
+
 section .text
 global _start
 
@@ -91,10 +97,3 @@ exit_program:
         mov rax, 60
         mov rdi, 0
         syscall
-
-section .data
-        screen_width equ 30
-        screen_height equ 10
-
-        BALL_CHAR db 'x'
-        WALL_CHAR db "#"
