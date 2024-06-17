@@ -2,5 +2,5 @@
 
 set -e
 
-nasm -f elf64 ./pong.asm -o ./pong.o
+nasm -f elf64 ./pong.s -o ./pong.o
 ld ./pong.o -o ./pong
