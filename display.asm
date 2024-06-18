@@ -59,6 +59,27 @@ print_number_ascii_print_loop:
 
         ret
 
+print_negative_number:
+        push rdx
+        push rsi
+        push rbx
+
+        mov rdx, 1
+        mov byte [ char_disp ], '-'
+        mov rsi, char_disp
+        call print
+
+        mov rbx, 0xffffffffffffffff
+        sub rbx, rax
+        mov rax, rbx
+        inc rax
+        call print_number
+
+        pop rbx
+        pop rsi
+        pop rdx
+        ret
+
 ; Sets the style of next messages using ANSI codes
 ; See https://en.wikipedia.org/wiki/ANSI_escape_code (SGR section)
 ; In rax, got the number of the style to apply
@@ -154,6 +175,17 @@ newline:
         pop rsi
         ret
 
+ok:
+        push rdx
+        push rsi
+        mov rdx, 4
+        mov rsi, OK
+        call print
+        pop rsi
+        pop rdx
+        ret
+
 section .data
         CSI db 0x1b, '['
         NEWLINE db 0Dh, 0Ah
+        OK db "Ok", 0Dh, 0Ah

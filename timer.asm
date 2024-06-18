@@ -32,27 +32,35 @@ start_timer:
         mov r8, rax
         mov r9, rbx
 
-        ; Create a timer
-        mov [ sigev_value ], rcx
+        ; timer_create
         mov rax, 222
         mov rdi, [ clockid ]
-        mov rsi, [ data_sigevent ]
-        mov rdx, [ timerid ]
+        mov qword [ sigev_value ], sighandler
+        mov rsi, data_sigevent
+        mov rdx, timerid
         syscall                      ; Call kernel
 
+        cmp rax, 0
+        jl raise_error
+
+        call ok
+
+        ; timer_settime
         mov rax, 223
-        mov rdi, rdx
+        mov rdi, [ timerid ]
         mov rsi, 0
         mov [ it_interval_sec ], r8
         mov [ it_value_sec ], r8
         mov [ it_interval_nsec ], r9
         mov [ it_value_nsec ], r9
-        mov rdx, [ itimerspec ]
-        mov rdx, 0
+        mov rdx, itimerspec
+        mov r10, 0
         syscall
 
-        mov rax, timerid
-        call print_number
+        cmp rax, 0
+        jl raise_error
+
+        call ok
 
         pop rsi
         pop rdi
@@ -60,6 +68,19 @@ start_timer:
         pop r9
         pop r8
         ret
+
+; Error code on rax
+raise_error:
+        mov rdx, errmsg_len
+        mov rsi, errmsg
+        call print
+        call print_negative_number
+        call newline
+
+        ; Syscall exit
+        mov rdi, rax
+        mov rax, 60
+        syscall
 
 ; STRUC sa_struct
 ;         .handler db 4
@@ -75,20 +96,26 @@ start_timer:
 ;         .it_value_nsec db 4
 ; ENDSTRUC
 
+section .bss
+        timerid resd 1
+
 section .data
-        clockid dd 0x0               ; CLOCK_REALTIME (0)
-        timerid dd 0                 ; Buffer to store the timer ID
+        clockid dd 0x1               ; CLOCK_REALTIME (0)
+        ; timerid dd 0                 ; Buffer to store the timer ID
 
 data_sigevent:
+        sigev_value dq 0             ; Value to pass to handler
+        sigev_signo dd 10            ; SIGALRM (14) or SIGUSR1 (10)
         sigev_notify dd 1            ; SIGEV_SIGNAL (1)
-        sigev_signo dd 14            ; SIGALRM (14)
-        sigev_value dd 0
-        sigev_notify_function dd sighandler
-        sigev_notify_attributes dd 0
-        sigev_notify_thread_id dd 0
+        padding dq 0, 0, 0, 0, 0, 0
+        data_sigevent_len equ $ - data_sigevent
 
 itimerspec:
         it_interval_sec dq 0
         it_interval_nsec dq 0
         it_value_sec dq 0
         it_value_nsec dq 0
+
+section .rodata
+        errmsg db "An error occured: ", 0Dh, 0Ah
+        errmsg_len equ $ - errmsg
