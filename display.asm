@@ -22,6 +22,7 @@ print_number:
         push rdx
         push rcx
         push rsi
+        push rax
 
         mov r8, 0
         cmp rax, 10
@@ -52,6 +53,7 @@ print_number_ascii_print_loop:
         cmp r8, 1
         jge print_number_ascii_print_loop
 
+        pop rax
         pop rsi
         pop rcx
         pop rdx

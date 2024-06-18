@@ -16,7 +16,24 @@ sighandler:
         pop rcx
         pop rbx
         pop rax
-        iret
+        ret
+
+set_sigev_mask:
+        push rbx
+        push r8
+        mov bl, [ sigev_signo ]
+
+        mov rax, 1
+set_sigev_mask_loop:
+        dec rbx
+        shl rax, 1
+
+        cmp rbx, 1
+        jge set_sigev_mask_loop
+
+        pop r8
+        pop rbx
+        ret
 
 ; Start a timer of N secs (N stored in rax)
 ;  rax stores the number of seconds
@@ -43,8 +60,6 @@ start_timer:
         cmp rax, 0
         jl raise_error
 
-        call ok
-
         ; timer_settime
         mov rax, 223
         mov rdi, [ timerid ]
@@ -60,6 +75,20 @@ start_timer:
         cmp rax, 0
         jl raise_error
 
+        ; rt_sigaction
+        call set_sigev_mask
+        mov [ sa_mask ], rax
+
+        mov rax, 13
+        ; TODO        Figure out these arguments till they are OK
+        mov rdi, [ sigev_signo ]
+        mov rsi, [ sigaction ]
+        mov rdx, 0
+        mov r10, 8
+        syscall
+
+        cmp rax, 0
+        jl raise_error
         call ok
 
         pop rsi
@@ -83,10 +112,6 @@ raise_error:
         syscall
 
 ; STRUC sa_struct
-;         .handler db 4
-;         .sa_flags db 4
-;         .sa_restorer db 4
-;         .sa_mask db 4
 ; ENDSTRUC
 
 ; STRUC itimerspec
@@ -96,25 +121,28 @@ raise_error:
 ;         .it_value_nsec db 4
 ; ENDSTRUC
 
-section .bss
-        timerid resd 1
-
 section .data
         clockid dd 0x1               ; CLOCK_REALTIME (0)
-        ; timerid dd 0                 ; Buffer to store the timer ID
+        timerid dd 0                 ; Buffer to store the timer ID
 
 data_sigevent:
         sigev_value dq 0             ; Value to pass to handler
         sigev_signo dd 10            ; SIGALRM (14) or SIGUSR1 (10)
         sigev_notify dd 1            ; SIGEV_SIGNAL (1)
-        padding dq 0, 0, 0, 0, 0, 0
-        data_sigevent_len equ $ - data_sigevent
+        sigev_padding dq 6 dup(0)
 
 itimerspec:
         it_interval_sec dq 0
         it_interval_nsec dq 0
         it_value_sec dq 0
         it_value_nsec dq 0
+
+sigaction:
+        sa_handler dq sighandler
+        sa_mask db 128 dup(0)
+        sa_flags dd 0
+        sa_pad dd 0
+        sa_restorer dq 0
 
 section .rodata
         errmsg db "An error occured: ", 0Dh, 0Ah
