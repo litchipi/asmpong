@@ -29,7 +29,7 @@ update_position_negative:
         dec rbx
         ret
 
-bounce:
+bounce_y:
         push rax
         mov rax, 1
         sub rax, [ direction + 1 ]
@@ -38,9 +38,9 @@ bounce:
         ret
 update_ball_direction:
         cmp byte [ ball ], 1
-        je bounce
+        je bounce_y
         cmp byte [ ball ], (SCREEN_HEIGHT - 1)
-        je bounce
+        je bounce_y
         ret
 
 update_ball_position:
@@ -57,7 +57,19 @@ update_ball_position:
         mov byte [ ball + 1], bl
         ret
 
+bounce_x:
+        push rax
+        mov rax, 1
+        sub rax, [ direction ]
+        mov byte [ direction ], al
+        pop rax
+        ret
 test_ball_touches_bar:
+        ; TODO        Conditionnal if the bar is there
+        cmp byte [ ball + 1 ], 1
+        je bounce_x
+        cmp byte [ ball + 1 ], (SCREEN_WIDTH - 1)
+        je bounce_x
         ret
 
 update_game:
