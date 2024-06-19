@@ -129,9 +129,57 @@ move_cursor:
         pop rdx
         ret
 
+hide_cursor:
+        push rdx
+        push rsi
+
+        mov rdx, 2
+        mov rsi, CSI
+        call print
+
+        mov rax, 1
+        mov byte [ char_disp ], '?'
+        mov rsi, char_disp
+        call print
+
+        mov rax, 25
+        call print_number
+
+        mov byte [ char_disp ], 'l'
+        mov rsi, char_disp
+        call print
+
+        pop rsi
+        pop rdx
+        ret
+
+show_cursor:
+        push rdx
+        push rsi
+
+        mov rdx, 2
+        mov rsi, CSI
+        call print
+
+        mov rax, 1
+        mov byte [ char_disp ], '?'
+        mov rsi, char_disp
+        call print
+
+        mov rax, 25
+        call print_number
+
+        mov byte [ char_disp ], 'h'
+        mov rsi, char_disp
+        call print
+
+        pop rsi
+        pop rdx
+        ret
+
 ; Reset the style of the terminal
 reset:
-        ; TODO        Show the cursor
+        call show_cursor
         push rax
         mov rax, 0
         call style

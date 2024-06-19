@@ -7,11 +7,11 @@ section .data
 
 section .rodata
         SCREEN_REFRESH_SEC equ 0
-        SCREEN_REFRESH_NSEC equ 200000000         ; 200 ms
+        SCREEN_REFRESH_NSEC equ 50000000         ; 200 ms
 
         SCREEN_DRAW_Y_START equ 3
-        SCREEN_WIDTH equ 30
-        SCREEN_HEIGHT equ 10
+        SCREEN_WIDTH equ 140
+        SCREEN_HEIGHT equ 40
 
         BALL_CHAR db 'x'
         WALL_CHAR db "#"
@@ -57,9 +57,12 @@ update_ball_position:
         mov byte [ ball + 1], bl
         ret
 
+test_ball_touches_bar:
+        ret
+
 update_game:
         call update_ball_direction
-        ; call test_ball_touches_bar
+        call test_ball_touches_bar
         call update_ball_position
         ret
 
@@ -117,29 +120,20 @@ draw_screen:
 timer_handler:
         call update_game
         call draw_screen
-
-        ; TODO        If specific conditions, ask exit the game
         ret
 
 _start:
 init_game:
-        ; TODO        Disable the cursor
         call reset
+        call hide_cursor
         mov rax, SCREEN_REFRESH_SEC
         mov rbx, SCREEN_REFRESH_NSEC
         mov rcx, timer_handler
         call start_timer
         call wait_forever
-        call clear
-        call draw_screen
 exit_program:
         call reset
-
-        ; TODO        Remove ?
-        mov al, SCREEN_HEIGHT
-        mov bl, 1
-        add al, 2
-        call move_cursor
+        call clear
 
         ; Syscall exit
         mov rax, 60
