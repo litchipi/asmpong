@@ -4,17 +4,24 @@
 section .data
         ball: db 5, 15        ; [ y, x ]
         direction: db 1, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
+        bar_left: db 1
+        bar_right: db 5
 
 section .rodata
         SCREEN_REFRESH_SEC equ 0
-        SCREEN_REFRESH_NSEC equ 50000000         ; 200 ms
+        ;                       _ms_us_ns
+        SCREEN_REFRESH_NSEC equ  20000000 ; 20 ms
 
         SCREEN_DRAW_Y_START equ 3
         SCREEN_WIDTH equ 140
         SCREEN_HEIGHT equ 40
 
-        BALL_CHAR db 'x'
-        WALL_CHAR db "#"
+        BAR_SIZE equ 6
+
+        EMPTY_CHAR db " "
+        BAR_CHAR db "█"
+        BALL_CHAR db '⬤'
+        WALL_CHAR dd "─"
 
 section .text
 global _start
@@ -36,11 +43,13 @@ bounce_y:
         mov byte [ direction + 1 ], al
         pop rax
         ret
-update_ball_direction:
-        cmp byte [ ball ], 1
-        je bounce_y
-        cmp byte [ ball ], (SCREEN_HEIGHT - 1)
-        je bounce_y
+
+bounce_x:
+        push rax
+        mov rax, 1
+        sub rax, [ direction ]
+        mov byte [ direction ], al
+        pop rax
         ret
 
 update_ball_position:
@@ -57,31 +66,50 @@ update_ball_position:
         mov byte [ ball + 1], bl
         ret
 
-bounce_x:
-        push rax
-        mov rax, 1
-        sub rax, [ direction ]
-        mov byte [ direction ], al
-        pop rax
+test_touches_left:
+        call bounce_x
+        ; TODO        Test if touches bar or not
+        ; Then create reaction based on it
         ret
-test_ball_touches_bar:
-        ; TODO        Conditionnal if the bar is there
-        cmp byte [ ball + 1 ], 1
-        je bounce_x
-        cmp byte [ ball + 1 ], (SCREEN_WIDTH - 1)
-        je bounce_x
+
+test_touches_right:
+        call bounce_x
+        ; TODO        Test if touches bar or not
+        ; Then create reaction based on it
         ret
 
 update_game:
-        call update_ball_direction
-        call test_ball_touches_bar
         call update_ball_position
+
+        ; If ball touches top of screen
+        push detect_left_edge
+        cmp byte [ ball ], 1
+        je bounce_y
+        pop rax
+
+        ; If ball touches bottom of screen
+        push detect_left_edge
+        cmp byte [ ball ], (SCREEN_HEIGHT - 1)
+        je bounce_y
+        pop rax
+
+detect_left_edge:
+        ; If ball touches left of screen
+        push detect_right_edge
+        cmp byte [ ball + 1 ], 1
+        je test_touches_left
+        pop rax
+
+detect_right_edge:
+        ; If ball touches right of screen
+        cmp byte [ ball + 1 ], (SCREEN_WIDTH - 1)
+        je test_touches_right
         ret
 
 draw_wall:
         dec rax
 
-        mov rdx, 1
+        mov rdx, 3
         mov rsi, WALL_CHAR
         call print
 
@@ -89,18 +117,69 @@ draw_wall:
         jge draw_wall
         ret
 
-draw_screen:
-        call clear
+draw_bar:
+        push r8
+        push rdx
+        push rsi
+
+        mov rdx, 3
+        mov rsi, BAR_CHAR
+        mov r8, BAR_SIZE
+draw_bar_loop:
+        call move_cursor
+        call print
+
+        inc rax
+        dec r8
+        cmp r8, 1
+        jge draw_bar_loop
+
+        pop rsi
+        pop rdx
+        pop r8
+        ret
+
+draw_ball:
+        push rax
+        push rdx
+        push rsi
+
+        mov rax, 0
+        mov rax, SCREEN_DRAW_Y_START
+        add al, [ ball ]
+        mov rbx, 0
+        mov bl, [ ball + 1 ]
+        call move_cursor
+
+        mov rdx, 4
+        mov rsi, BALL_CHAR
+        call print
+
+        pop rsi
+        pop rdx
+        pop rax
+        ret
+
+draw_top_bar:
+        push rax
+
         mov rax, 0
         mov al, [ ball ]
+        call erase_line
         call print_number
         call newline
 
         mov rax, 0
         mov al, [ ball + 1]
+        call erase_line
         call print_number
         call newline
 
+        pop rax
+        ret
+
+draw_screen:
+        call draw_top_bar
 
         ; Draw top wall
         mov rax, SCREEN_DRAW_Y_START
@@ -117,6 +196,23 @@ draw_screen:
         call draw_wall
 
         ; Draw the ball
+        call draw_ball
+
+        ; Draw the left bar
+        mov al, [ bar_left ]
+        add rax, SCREEN_DRAW_Y_START
+        mov rbx, 1 ;[ bar_left ]
+        call draw_bar
+
+        ; Draw the right bar
+        mov al, [ bar_right ]
+        add rax, SCREEN_DRAW_Y_START
+        mov rbx, SCREEN_WIDTH
+        call draw_bar
+
+        ret
+
+erase_prev_screen:
         mov rax, 0
         mov rax, SCREEN_DRAW_Y_START
         add al, [ ball ]
@@ -124,18 +220,22 @@ draw_screen:
         mov bl, [ ball + 1 ]
         call move_cursor
         mov rdx, 1
-        mov rsi, BALL_CHAR
+        mov rsi, EMPTY_CHAR
         call print
-
         ret
 
 timer_handler:
+        call erase_prev_screen
+        mov rax, 1
+        mov rbx, 1
+        call move_cursor
         call update_game
         call draw_screen
         ret
 
 _start:
 init_game:
+        call clear
         call reset
         call hide_cursor
         mov rax, SCREEN_REFRESH_SEC
@@ -145,6 +245,7 @@ init_game:
         call wait_forever
 exit_program:
         call reset
+        call show_cursor
         call clear
 
         ; Syscall exit

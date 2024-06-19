@@ -107,6 +107,7 @@ style:
 move_cursor:
         push rdx
         push rsi
+        push rax
 
         mov rdx, 2
         mov rsi, CSI
@@ -125,6 +126,7 @@ move_cursor:
         mov rsi, char_disp
         call print
 
+        pop rax
         pop rsi
         pop rdx
         ret
@@ -179,7 +181,6 @@ show_cursor:
 
 ; Reset the style of the terminal
 reset:
-        call show_cursor
         push rax
         mov rax, 0
         call style
@@ -208,10 +209,34 @@ clear:
         mov rsi, char_disp
         call print
 
-        pop rax
-        pop rbx
-        pop rdx
         pop rsi
+        pop rdx
+        pop rbx
+        pop rax
+        ret
+
+erase_line:
+        push rax
+        push rbx
+        push rdx
+        push rsi
+
+        mov rdx, 2
+        mov rsi, CSI
+        call print
+
+        mov rax, 2
+        call print_number
+
+        mov byte [ char_disp ], 'K'
+        mov rsi, char_disp
+        call print
+
+        pop rsi
+        pop rdx
+        pop rbx
+        pop rax
+
         ret
 
 newline:
@@ -222,16 +247,18 @@ newline:
         mov rsi, NEWLINE
         call print
 
-        pop rdx
         pop rsi
+        pop rdx
         ret
 
 ok:
         push rdx
         push rsi
+
         mov rdx, 4
         mov rsi, OK
         call print
+
         pop rsi
         pop rdx
         ret
