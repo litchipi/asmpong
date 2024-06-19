@@ -131,6 +131,7 @@ move_cursor:
 
 ; Reset the style of the terminal
 reset:
+        ; TODO        Show the cursor
         push rax
         mov rax, 0
         call style

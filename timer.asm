@@ -1,38 +1,28 @@
 section .text
 
-; Signal handler for SIGALRM
-sighandler:
+wait_forever:
         push rax
-        mov rax, 45
-        call print_number
-        push rbx
-        push rcx
         push rdx
+        push rsi
 
-        ; Call the callback function
-        ; TODO        Get it from the sigev_value arg
+        ; Pause syscall, wait for new signals
+        mov rax, 34
+        syscall
 
+        cmp byte [ ASK_EXIT ], 1
+        jl wait_forever
+
+        pop rsi
         pop rdx
-        pop rcx
-        pop rbx
         pop rax
         ret
 
-set_sigev_mask:
-        push rbx
-        push r8
-        mov bl, [ sigev_signo ]
+ask_exit:
+        mov byte [ ASK_EXIT ], 1
+        ret
 
-        mov rax, 1
-set_sigev_mask_loop:
-        dec rbx
-        shl rax, 1
-
-        cmp rbx, 1
-        jge set_sigev_mask_loop
-
-        pop r8
-        pop rbx
+; Signal handler for SIGALRM
+sighandler:
         ret
 
 ; Start a timer of N secs (N stored in rax)
@@ -49,11 +39,23 @@ start_timer:
         mov r8, rax
         mov r9, rbx
 
+        ; rt_sigaction
+        mov qword [ sa_handler ], rcx
+breakpoint:
+        mov rax, 13
+        mov rdi, [ sigev_signo ]
+        mov rsi, sa
+        mov rdx, 0
+        mov r10, 8
+        syscall
+
+        cmp rax, 0
+        jl raise_error
+
         ; timer_create
         mov rax, 222
         mov rdi, [ clockid ]
-        mov qword [ sigev_value ], sighandler
-        mov rsi, data_sigevent
+        mov rsi, [ sigevent ]
         mov rdx, timerid
         syscall                      ; Call kernel
 
@@ -75,22 +77,6 @@ start_timer:
         cmp rax, 0
         jl raise_error
 
-        ; rt_sigaction
-        call set_sigev_mask
-        mov [ sa_mask ], rax
-
-        mov rax, 13
-        ; TODO        Figure out these arguments till they are OK
-        mov rdi, [ sigev_signo ]
-        mov rsi, [ sigaction ]
-        mov rdx, 0
-        mov r10, 8
-        syscall
-
-        cmp rax, 0
-        jl raise_error
-        call ok
-
         pop rsi
         pop rdi
         pop rdx
@@ -111,23 +97,18 @@ raise_error:
         mov rax, 60
         syscall
 
-; STRUC sa_struct
-; ENDSTRUC
-
-; STRUC itimerspec
-;         .it_inter_sec db 4
-;         .it_inter_nsec db 4
-;         .it_value_sec db 4
-;         .it_value_nsec db 4
-; ENDSTRUC
+sa_restorer_fct:
+        mov rax, 15
+        syscall
 
 section .data
-        clockid dd 0x1               ; CLOCK_REALTIME (0)
+        clockid dd 0x0               ; CLOCK_REALTIME (0)
         timerid dd 0                 ; Buffer to store the timer ID
+        ASK_EXIT db 0
 
-data_sigevent:
+sigevent:
         sigev_value dq 0             ; Value to pass to handler
-        sigev_signo dd 10            ; SIGALRM (14) or SIGUSR1 (10)
+        sigev_signo dd 14
         sigev_notify dd 1            ; SIGEV_SIGNAL (1)
         sigev_padding dq 6 dup(0)
 
@@ -137,12 +118,12 @@ itimerspec:
         it_value_sec dq 0
         it_value_nsec dq 0
 
-sigaction:
+sa:
         sa_handler dq sighandler
-        sa_mask db 128 dup(0)
-        sa_flags dd 0
-        sa_pad dd 0
-        sa_restorer dq 0
+        sa_flags dd 0x04000000
+        padding dd 0
+        sa_restorer dq sa_restorer_fct
+        sa_mask dq 0
 
 section .rodata
         errmsg db "An error occured: ", 0Dh, 0Ah
