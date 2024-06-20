@@ -13,13 +13,13 @@ section .data
 section .rodata
         SCREEN_REFRESH_SEC equ 0
         ;                       _ms_us_ns
-        SCREEN_REFRESH_NSEC equ  20000000 ; 20 ms
+        SCREEN_REFRESH_NSEC equ  25000000 ; 25 ms
 
         SCREEN_DRAW_Y_START equ 4
         SCREEN_WIDTH equ 140
         SCREEN_HEIGHT equ 40
 
-        BAR_SIZE equ 6
+        BAR_SIZE equ 10
 
         EMPTY_CHAR db " "
         BAR_CHAR db "█"
@@ -170,6 +170,55 @@ detect_right_edge:
         je test_touches_right
         ret
 
+erase_prev_screen:
+        push rax
+        push rbx
+
+        ; Clean the previous position of the ball
+        mov rax, SCREEN_DRAW_Y_START
+        add al, [ ball ]
+        mov rbx, 0
+        mov bl, [ ball + 1]
+        call move_cursor
+
+        mov rdx, 1
+        mov rsi, EMPTY_CHAR
+        call print
+
+        mov rdx, 1
+        mov rsi, EMPTY_CHAR
+        mov r8, BAR_SIZE
+
+        mov al, [ bar_left ]
+        add rax, SCREEN_DRAW_Y_START
+        mov rbx, 1
+
+erase_bar_left:
+        call move_cursor
+        call print
+        inc rax
+        dec r8
+        cmp r8, 1
+        jge erase_bar_left
+
+        mov r8, BAR_SIZE
+
+        mov al, [ bar_right ]
+        add rax, SCREEN_DRAW_Y_START
+        mov rbx, SCREEN_WIDTH
+
+erase_bar_right:
+        call move_cursor
+        call print
+        inc rax
+        dec r8
+        cmp r8, 1
+        jge erase_bar_right
+
+        pop rbx
+        pop rax
+        ret
+
 draw_wall:
         dec rax
 
@@ -279,18 +328,6 @@ draw_screen:
         mov rbx, SCREEN_WIDTH
         call draw_bar
 
-        ret
-
-erase_prev_screen:
-        mov rax, 0
-        mov rax, SCREEN_DRAW_Y_START
-        add al, [ ball ]
-        mov rbx, 0
-        mov bl, [ ball + 1 ]
-        call move_cursor
-        mov rdx, 1
-        mov rsi, EMPTY_CHAR
-        call print
         ret
 
 timer_handler:
