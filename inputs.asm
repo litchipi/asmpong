@@ -1,4 +1,4 @@
-%include 'display.asm'
+%include 'terminal.asm'
 
 section .bss
         char resb 1

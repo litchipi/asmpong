@@ -1,5 +1,5 @@
 %include 'timer.asm'
-%include 'display.asm'
+%include 'terminal.asm'
 
 section .bss
         char_inp: resb 1
@@ -15,7 +15,7 @@ section .rodata
         ;                       _ms_us_ns
         SCREEN_REFRESH_NSEC equ  20000000 ; 20 ms
 
-        SCREEN_DRAW_Y_START equ 3
+        SCREEN_DRAW_Y_START equ 4
         SCREEN_WIDTH equ 140
         SCREEN_HEIGHT equ 40
 
@@ -27,9 +27,43 @@ section .rodata
         WALL_CHAR dd "─"
 
         EXIT_CHAR equ 'q'
+        USR1_UP_CHAR equ 'z'
+        USR1_DOWN_CHAR equ 's'
+        USR2_UP_CHAR equ 'p'
+        USR2_DOWN_CHAR equ 'm'
 
 section .text
 global _start
+
+usr1_up:
+        dec byte [ bar_left ]
+        ret
+
+usr1_down:
+        inc byte [ bar_left ]
+        ret
+
+usr2_up:
+        dec byte [ bar_right ]
+        ret
+
+usr2_down:
+        inc byte [ bar_right ]
+        ret
+
+react_input:
+        cmp byte [ char_inp ], USR1_UP_CHAR
+        je usr1_up
+
+        cmp byte [ char_inp ], USR1_DOWN_CHAR
+        je usr1_down
+
+        cmp byte [ char_inp ], USR2_UP_CHAR
+        je usr2_up
+
+        cmp byte [ char_inp ], USR2_DOWN_CHAR
+        je usr2_down
+        ret
 
 get_input:
         push rax
@@ -46,6 +80,9 @@ get_input:
 
         cmp byte [ char_inp ], EXIT_CHAR
         je exit_program
+
+        call react_input
+        mov byte [ char_inp ], ' '
 
         pop rdx
         pop rsi
@@ -200,6 +237,11 @@ draw_top_bar:
         mov al, [ ball + 1]
         call erase_line
         call print_number
+        call newline
+
+        mov rdx, 1
+        mov rsi, char_inp
+        call print
         call newline
 
         pop rax
