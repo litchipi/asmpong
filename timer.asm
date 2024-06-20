@@ -1,5 +1,3 @@
-%include 'display.asm'
-
 section .text
 
 wait_forever:
@@ -43,7 +41,6 @@ start_timer:
 
         ; rt_sigaction
         mov qword [ sa_handler ], rcx
-breakpoint:
         mov rax, 13
         mov rdi, [ sigev_signo ]
         mov rsi, sa

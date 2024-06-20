@@ -7,7 +7,10 @@ section .text
 global _start
 
 _start:
+        call set_non_blocking
         call enable_raw_mode
+loop:
+        call ok
 
         ; getch
         mov rax, 0
@@ -19,4 +22,4 @@ _start:
         cmp rax, 0
         jl raise_error
 
-        jmp _start
+        jmp loop

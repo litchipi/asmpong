@@ -26,8 +26,32 @@ section .rodata
         BALL_CHAR db '⬤'
         WALL_CHAR dd "─"
 
+        EXIT_CHAR equ 'q'
+
 section .text
 global _start
+
+get_input:
+        push rax
+        push rdi
+        push rsi
+        push rdx
+
+        ; Read on stdinp
+        mov rax, 0
+        mov rdi, 0
+        mov rsi, char_inp
+        mov rdx, 1
+        syscall
+
+        cmp byte [ char_inp ], EXIT_CHAR
+        je exit_program
+
+        pop rdx
+        pop rsi
+        pop rdi
+        pop rax
+        ret
 
 update_position:
         cmp rax, 1
@@ -232,6 +256,7 @@ timer_handler:
         mov rax, 1
         mov rbx, 1
         call move_cursor
+        call get_input
         call update_game
         call draw_screen
         ret
@@ -241,15 +266,15 @@ init_game:
         call clear
         call reset
         call hide_cursor
+        call enable_raw_mode
         mov rax, SCREEN_REFRESH_SEC
         mov rbx, SCREEN_REFRESH_NSEC
         mov rcx, timer_handler
         call start_timer
         call wait_forever
+
 exit_program:
-        call reset
-        call show_cursor
-        call clear
+        call restore_term
 
         ; Syscall exit
         mov rax, 60

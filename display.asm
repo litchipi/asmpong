@@ -4,6 +4,8 @@ section .bss
         old_term_cfg resb 60
         new_term_cfg resb 60
 
+        flags resd 1
+
 section .rodata
         errmsg db "An error occured: ", 0Dh, 0Ah
         errmsg_len equ $ - errmsg
@@ -325,20 +327,71 @@ enable_raw_mode:
         pop rax
         ret
 
-disable_raw_mode:
+set_non_blocking:
+        push rax
+        push rdi
+        push rsi
+        push rdx
+
+        ; Get current file descriptor flags
+        mov rax, 55 ; fnctl
+        mov rdi, 0  ; stdin
+        mov rsi, 3  ; F_GETFL
+        mov rdx, flags
+        syscall
+
+breakpoint:
+        cmp rax, 0
+        jl raise_error
+        call ok
+
+        ; Save original flags
+        mov [flags], eax
+
+        ; Set file descriptor to non-blocking mode
+        or eax, 0x800 ; Set the O_NONBLOCK bit
+        mov rdx, rax
+        mov rax, 55 ; fnctl
+        mov rdi, 0
+        mov rsi, 4 ; F_SETFL
+        syscall
+
+        cmp rax, 0
+        jl raise_error
+        call ok
+
+        pop rdx
+        pop rsi
+        pop rdi
+        pop rax
+        ret
+
+restore_term:
         push rax
         push rbx
         push rcx
         push rdx
 
-        mov rax, 16
-        mov rbx, 0
-        mov rcx, IOCTL_TCSETS
-        lea rdx, [old_term_cfg]
+        call reset
+
+        ; restore stdin flags (blocking)
+        mov rax, 55 ; fnctl
+        mov rdi, 0
+        mov rsi, 4
+        mov rdx, [ flags ]
         syscall
 
+        ; restore terminal settings (canonical + echo)
+        mov rax, 16 ; ioctl
+        mov rdi, 0
+        mov rsi, IOCTL_TCSETS
+        lea rdx, [old_term_cfg]
+        syscall
         cmp rax, 0
         jl raise_error
+
+        call show_cursor
+        call clear
 
         pop rdx
         pop rcx
