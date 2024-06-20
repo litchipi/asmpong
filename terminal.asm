@@ -393,8 +393,6 @@ restore_term:
 
 ; Error code on rax
 raise_error:
-        call restore_term
-
         mov rdx, errmsg_len
         mov rsi, errmsg
         call print
