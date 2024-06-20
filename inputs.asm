@@ -9,8 +9,12 @@ global _start
 _start:
         call set_non_blocking
         call enable_raw_mode
+        mov byte [ char ], '_'
 loop:
-        call ok
+        mov rdx, 1
+        mov rsi, char
+        call print
+        call newline
 
         ; getch
         mov rax, 0

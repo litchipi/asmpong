@@ -275,6 +275,7 @@ init_game:
 
 exit_program:
         call restore_term
+        call clear
 
         ; Syscall exit
         mov rax, 60

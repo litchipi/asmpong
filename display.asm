@@ -292,7 +292,6 @@ enable_raw_mode:
 
         cmp rax, 0
         jl raise_error
-        call ok
 
         ; Copy 60 bytes of data from rsi to rdi
         lea esi, [old_term_cfg]
@@ -317,7 +316,6 @@ enable_raw_mode:
 
         cmp rax, 0
         jl raise_error
-        call ok
 
         pop rdi
         pop rsi
@@ -334,16 +332,14 @@ set_non_blocking:
         push rdx
 
         ; Get current file descriptor flags
-        mov rax, 55 ; fnctl
+        mov rax, 72 ; fcntl
         mov rdi, 0  ; stdin
         mov rsi, 3  ; F_GETFL
         mov rdx, flags
         syscall
 
-breakpoint:
         cmp rax, 0
         jl raise_error
-        call ok
 
         ; Save original flags
         mov [flags], eax
@@ -351,14 +347,13 @@ breakpoint:
         ; Set file descriptor to non-blocking mode
         or eax, 0x800 ; Set the O_NONBLOCK bit
         mov rdx, rax
-        mov rax, 55 ; fnctl
+        mov rax, 72 ; fcntl
         mov rdi, 0
         mov rsi, 4 ; F_SETFL
         syscall
 
         cmp rax, 0
         jl raise_error
-        call ok
 
         pop rdx
         pop rsi
@@ -375,7 +370,7 @@ restore_term:
         call reset
 
         ; restore stdin flags (blocking)
-        mov rax, 55 ; fnctl
+        mov rax, 72 ; fcntl
         mov rdi, 0
         mov rsi, 4
         mov rdx, [ flags ]
@@ -387,11 +382,8 @@ restore_term:
         mov rsi, IOCTL_TCSETS
         lea rdx, [old_term_cfg]
         syscall
-        cmp rax, 0
-        jl raise_error
 
         call show_cursor
-        call clear
 
         pop rdx
         pop rcx
@@ -401,6 +393,8 @@ restore_term:
 
 ; Error code on rax
 raise_error:
+        call restore_term
+
         mov rdx, errmsg_len
         mov rsi, errmsg
         call print
