@@ -345,7 +345,7 @@ set_non_blocking:
         mov [flags], eax
 
         ; Set file descriptor to non-blocking mode
-        or eax, 0x800 ; Set the O_NONBLOCK bit
+        or rax, 0x800 ; Set the O_NONBLOCK bit
         mov rdx, rax
         mov rax, 72 ; fcntl
         mov rdi, 0
