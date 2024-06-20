@@ -299,9 +299,7 @@ enable_raw_mode:
         mov ecx, 60
         rep movsb
 
-        ; Modify new termios for raw mode
-        ; Disable ICANON (canonical mode) and ECHO (echo input characters)
-        ; Control characters (VEOF, VEOL) are located at offset 6 and 7
+        ; Modify the configuration of terminal
         lea eax, [new_term_cfg]
         ; Offset to c_lflag
         add eax, 12
