@@ -1,6 +1,13 @@
 section .bss
         char_disp: resb 1
 
+        old_term_cfg resb 60
+        new_term_cfg resb 60
+
+section .rodata
+        errmsg db "An error occured: ", 0Dh, 0Ah
+        errmsg_len equ $ - errmsg
+
 section .text
 
 ; Prints message on rcx, with length on rdx
@@ -11,6 +18,9 @@ print:
         mov rax, 1
         mov edi, 1
         syscall
+
+        cmp rax, 0
+        jl raise_error
 
         pop rdi
         pop rax
@@ -263,7 +273,96 @@ ok:
         pop rdx
         ret
 
+enable_raw_mode:
+        push rax
+        push rbx
+        push rcx
+        push rdx
+        push rsi
+        push rdi
+
+        ; Save current config into old_term_cfg
+        mov rax, 16
+        mov rdi, 0
+        mov rsi, IOCTL_TCGETS
+        mov rdx, old_term_cfg
+        syscall
+
+        cmp rax, 0
+        jl raise_error
+        call ok
+
+        ; Copy 60 bytes of data from rsi to rdi
+        lea esi, [old_term_cfg]
+        lea edi, [new_term_cfg]
+        mov ecx, 60
+        rep movsb
+
+        ; Modify new termios for raw mode
+        ; Disable ICANON (canonical mode) and ECHO (echo input characters)
+        ; Control characters (VEOF, VEOL) are located at offset 6 and 7
+        lea eax, [new_term_cfg]
+        ; Offset to c_lflag
+        add eax, 12
+        and byte [eax], 0xF5 ; Clear bit 1 and 3 -> disable ICANON and ECHO
+
+        ; Set new settings
+        mov rax, 16
+        mov rdi, 0
+        mov rsi, IOCTL_TCSETS
+        lea rdx, [new_term_cfg]
+        syscall
+
+        cmp rax, 0
+        jl raise_error
+        call ok
+
+        pop rdi
+        pop rsi
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
+        ret
+
+disable_raw_mode:
+        push rax
+        push rbx
+        push rcx
+        push rdx
+
+        mov rax, 16
+        mov rbx, 0
+        mov rcx, IOCTL_TCSETS
+        lea rdx, [old_term_cfg]
+        syscall
+
+        cmp rax, 0
+        jl raise_error
+
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
+        ret
+
+; Error code on rax
+raise_error:
+        mov rdx, errmsg_len
+        mov rsi, errmsg
+        call print
+        call print_negative_number
+        call newline
+
+        ; Syscall exit
+        mov rdi, rax
+        mov rax, 60
+        syscall
+
 section .data
         CSI db 0x1b, '['
         NEWLINE db 0Dh, 0Ah
         OK db "Ok", 0Dh, 0Ah
+
+        IOCTL_TCGETS equ 0x5401
+        IOCTL_TCSETS equ 0x5402

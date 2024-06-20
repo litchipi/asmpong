@@ -1,6 +1,9 @@
 %include 'timer.asm'
 %include 'display.asm'
 
+section .bss
+        char_inp: resb 1
+
 section .data
         ball: db 5, 15        ; [ y, x ]
         direction: db 1, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]

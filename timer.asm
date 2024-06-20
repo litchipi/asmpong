@@ -1,3 +1,5 @@
+%include 'display.asm'
+
 section .text
 
 wait_forever:
@@ -84,19 +86,6 @@ breakpoint:
         pop r8
         ret
 
-; Error code on rax
-raise_error:
-        mov rdx, errmsg_len
-        mov rsi, errmsg
-        call print
-        call print_negative_number
-        call newline
-
-        ; Syscall exit
-        mov rdi, rax
-        mov rax, 60
-        syscall
-
 sa_restorer_fct:
         mov rax, 15
         syscall
@@ -124,7 +113,3 @@ sa:
         padding dd 0
         sa_restorer dq sa_restorer_fct
         sa_mask dq 0
-
-section .rodata
-        errmsg db "An error occured: ", 0Dh, 0Ah
-        errmsg_len equ $ - errmsg
