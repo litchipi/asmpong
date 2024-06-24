@@ -193,9 +193,31 @@ touch_left_exit:
 
 ; Function test if ball touches the right bar
 test_touches_right:
+        push rax
+        push rbx
+
+        mov al, byte [ ball ]
+        cmp al, byte [ bar_right ]
+        jl touch_right_left_win
+
+        mov bl, byte [ bar_right ]
+        add bl, BAR_SIZE
+        cmp al, bl
+        jg touch_right_left_win
+
         call bounce_x
-        ; TODO        Test if touches bar or not
-        ; Then create reaction based on it
+        jmp touch_right_exit
+
+touch_right_left_win:
+        ; TODO        What to do if left win
+        call restore_term
+        call clear
+        call ok
+        jmp syscall_exit
+
+touch_right_exit:
+        pop rbx
+        pop rax
         ret
 
 
