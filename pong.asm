@@ -5,10 +5,14 @@ section .bss
         char_inp: resb 1
 
 section .data
-        ball: db 5, 15        ; [ y, x ]
+        ball: db INIT_BALL_Y, INIT_BALL_X   ; [ y, x ]
         direction: db 1, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
-        bar_left: db 1
-        bar_right: db 5
+
+        bar_left: db INIT_BAR_Y
+        bar_right: db INIT_BAR_Y
+
+        score_left: db 0
+        score_right: db 0
 
 section .rodata
         SCREEN_REFRESH_SEC equ 0
@@ -18,6 +22,9 @@ section .rodata
         SCREEN_DRAW_Y_START equ 4
         SCREEN_WIDTH equ 140
         SCREEN_HEIGHT equ 40
+        INIT_BAR_Y equ (SCREEN_HEIGHT / 2) - (BAR_SIZE / 2)
+        INIT_BALL_Y equ (SCREEN_HEIGHT / 2)
+        INIT_BALL_X equ (SCREEN_WIDTH / 2)
 
         BAR_SIZE equ 10
 
@@ -179,11 +186,8 @@ test_touches_left:
         jmp touch_left_exit
 
 touch_left_right_win:
-        ; TODO        What to do if right win
-        call restore_term
-        call clear
-        call ok
-        jmp syscall_exit
+        inc byte [ score_right ]
+        call reset_after_point
 
 touch_left_exit:
         pop rbx
@@ -209,11 +213,8 @@ test_touches_right:
         jmp touch_right_exit
 
 touch_right_left_win:
-        ; TODO        What to do if left win
-        call restore_term
-        call clear
-        call ok
-        jmp syscall_exit
+        inc byte [ score_left ]
+        call reset_after_point
 
 touch_right_exit:
         pop rbx
@@ -252,6 +253,26 @@ update_game:
         cmp byte [ ball ], (SCREEN_HEIGHT - 1)
         je bounce_y
 
+        ret
+
+
+; Reset the game field after a point was scored
+reset_after_point:
+        push rax
+
+        mov al, byte [ score_left ]
+        add al, byte [ score_right ]
+        and al, 0x03
+        ; TODO        Use this 2 bits to set the direction to use
+
+        mov byte [ ball ], INIT_BALL_Y
+        mov byte [ ball + 1 ], INIT_BALL_X
+        mov byte [ direction ], 1
+        mov byte [ direction + 1 ], 0
+        mov byte [ bar_left ], INIT_BAR_Y
+        mov byte [ bar_right ], INIT_BAR_Y
+
+        pop rax
         ret
 
 
@@ -377,13 +398,13 @@ draw_top_bar:
         ; TODO        Write the score for each player
 
         mov rax, 0
-        mov al, [ ball ]
+        mov al, [ score_left ]
         call erase_line
         call print_number
         call newline
 
         mov rax, 0
-        mov al, [ ball + 1]
+        mov al, [ score_right ]
         call erase_line
         call print_number
         call newline
