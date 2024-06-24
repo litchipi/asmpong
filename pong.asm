@@ -106,6 +106,17 @@ get_input:
         pop rax
         ret
 
+
+; Bounce the ball on the top and bottom bars
+bounce_y:
+        push rax
+        mov rax, 1
+        sub rax, [ direction + 1 ]
+        mov byte [ direction + 1 ], al
+        pop rax
+        ret
+
+
 update_position:
         cmp rax, 1
         jl update_position_negative
@@ -116,13 +127,6 @@ update_position_negative:
         dec rbx
         ret
 
-bounce_y:
-        push rax
-        mov rax, 1
-        sub rax, [ direction + 1 ]
-        mov byte [ direction + 1 ], al
-        pop rax
-        ret
 
 update_ball_position:
         ; Update x
