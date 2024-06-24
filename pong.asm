@@ -117,6 +117,7 @@ bounce_y:
         ret
 
 
+; Update the position of the ball based on the direction passed in param
 update_position:
         cmp rax, 1
         jl update_position_negative
@@ -128,6 +129,7 @@ update_position_negative:
         ret
 
 
+; Update position of the ball based on direction of movement
 update_ball_position:
         ; Update x
         mov al, [ direction + 1 ]
@@ -142,6 +144,8 @@ update_ball_position:
         mov byte [ ball + 1], bl
         ret
 
+
+; Bounce the ball on the side bars
 bounce_x:
         push rax
         mov rax, 1
@@ -150,12 +154,16 @@ bounce_x:
         pop rax
         ret
 
+
+; Function test if ball touches the left bar
 test_touches_left:
         call bounce_x
         ; TODO        Test if touches bar or not
         ; Then create reaction based on it
         ret
 
+
+; Function test if ball touches the right bar
 test_touches_right:
         call bounce_x
         ; TODO        Test if touches bar or not
@@ -179,6 +187,7 @@ detect_right_edge:
         ret
 
 
+; Function update the whole game data
 update_game:
         call update_ball_position
 
@@ -196,6 +205,7 @@ update_game:
         ret
 
 
+; Erase the previous screen
 erase_prev_screen:
         push rax
         push rbx
@@ -219,6 +229,8 @@ erase_prev_screen:
         add rax, SCREEN_DRAW_Y_START
         mov rbx, 1
 
+
+; Erase the previous bar left, to draw the new one
 erase_bar_left:
         call move_cursor
         call print
@@ -233,6 +245,8 @@ erase_bar_left:
         add rax, SCREEN_DRAW_Y_START
         mov rbx, SCREEN_WIDTH
 
+
+; Erase the previous bar right, to draw the new one
 erase_bar_right:
         call move_cursor
         call print
@@ -245,6 +259,8 @@ erase_bar_right:
         pop rax
         ret
 
+
+; Draw a horizontal wall
 draw_wall:
         dec rax
 
@@ -256,6 +272,8 @@ draw_wall:
         jge draw_wall
         ret
 
+
+; Draw a "player" bar
 draw_bar:
         push r8
         push rdx
@@ -278,6 +296,8 @@ draw_bar_loop:
         pop r8
         ret
 
+
+; Draw the ball
 draw_ball:
         push rax
         push rdx
@@ -299,8 +319,12 @@ draw_ball:
         pop rax
         ret
 
+
+; Draw the informations at the top of the screen
 draw_top_bar:
         push rax
+
+        ; TODO        Write the score for each player
 
         mov rax, 0
         mov al, [ ball ]
@@ -322,6 +346,8 @@ draw_top_bar:
         pop rax
         ret
 
+
+; Draw the whole screen of the game
 draw_screen:
         call draw_top_bar
 
@@ -356,6 +382,8 @@ draw_screen:
 
         ret
 
+
+; Function that gets called at every timer update
 timer_handler:
         call erase_prev_screen
         mov rax, 1
@@ -366,6 +394,8 @@ timer_handler:
         call draw_screen
         ret
 
+
+; Function started when launching the executable
 _start:
 init_game:
         call clear
