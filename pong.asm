@@ -49,7 +49,7 @@ usr1_down:
         ret
 
 usr1_test_down:
-        cmp byte [ bar_left ], SCREEN_HEIGHT
+        cmp byte [ bar_left ], ( SCREEN_HEIGHT - BAR_SIZE )
         jl usr1_down
         ret
 
@@ -366,6 +366,7 @@ init_game:
         call reset
         call hide_cursor
         call enable_raw_mode
+        call set_non_blocking
         mov rax, SCREEN_REFRESH_SEC
         mov rbx, SCREEN_REFRESH_NSEC
         mov rcx, timer_handler
