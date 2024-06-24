@@ -13,7 +13,7 @@ section .data
 section .rodata
         SCREEN_REFRESH_SEC equ 0
         ;                       _ms_us_ns
-        SCREEN_REFRESH_NSEC equ  25000000 ; 25 ms
+        SCREEN_REFRESH_NSEC equ  40000000 ; 40 ms
 
         SCREEN_DRAW_Y_START equ 4
         SCREEN_WIDTH equ 140
@@ -35,56 +35,52 @@ section .rodata
 section .text
 global _start
 
-usr1_up:
-        dec byte [ bar_left ]
-        ret
-
-usr1_test_up:
-        cmp byte [ bar_left ], 1
-        jg usr1_up
-        ret
-
-usr1_down:
-        inc byte [ bar_left ]
-        ret
-
-usr1_test_down:
-        cmp byte [ bar_left ], ( SCREEN_HEIGHT - BAR_SIZE )
-        jl usr1_down
-        ret
-
-usr2_up:
-        dec byte [ bar_right ]
-        ret
-
-usr2_test_up:
-        cmp byte [ bar_right ], 1
-        jg usr2_up
-        ret
-
-usr2_down:
-        inc byte [ bar_right ]
-        ret
-
-usr2_test_down:
-        cmp byte [ bar_right ], SCREEN_HEIGHT
-        jl usr2_down
-        ret
-
+; Function react_input
 react_input:
+; Left Up
         cmp byte [ char_inp ], USR1_UP_CHAR
-        je usr1_test_up
+        jnz react_usr1_down
 
+        cmp byte [ bar_left ], 1
+        jle react_finish
+
+        dec byte [ bar_left ]
+
+; Left Down
+react_usr1_down:
         cmp byte [ char_inp ], USR1_DOWN_CHAR
-        je usr1_test_down
+        jnz react_usr2_up
 
+        cmp byte [ bar_left ], ( SCREEN_HEIGHT - BAR_SIZE )
+        jge react_finish
+
+        inc byte [ bar_left ]
+
+; Right Up
+react_usr2_up:
         cmp byte [ char_inp ], USR2_UP_CHAR
-        je usr2_test_up
+        jnz react_usr2_down
 
+        cmp byte [ bar_right ], 1
+        jle react_finish
+
+        dec byte [ bar_right ]
+
+; Right Down
+react_usr2_down:
         cmp byte [ char_inp ], USR2_DOWN_CHAR
-        je usr2_test_down
+        jnz react_finish
+
+        cmp byte [ bar_right ], ( SCREEN_HEIGHT - BAR_SIZE )
+        jge react_finish
+
+        inc byte [ bar_right ]
+
+react_finish:
         ret
 
+
+; Function get_input
 get_input:
         push rax
         push rdi
@@ -128,14 +124,6 @@ bounce_y:
         pop rax
         ret
 
-bounce_x:
-        push rax
-        mov rax, 1
-        sub rax, [ direction ]
-        mov byte [ direction ], al
-        pop rax
-        ret
-
 update_ball_position:
         ; Update x
         mov al, [ direction + 1 ]
@@ -148,6 +136,14 @@ update_ball_position:
         mov bl, [ ball + 1 ]
         call update_position
         mov byte [ ball + 1], bl
+        ret
+
+bounce_x:
+        push rax
+        mov rax, 1
+        sub rax, [ direction ]
+        mov byte [ direction ], al
+        pop rax
         ret
 
 test_touches_left:
