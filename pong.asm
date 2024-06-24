@@ -162,33 +162,39 @@ test_touches_right:
         ; Then create reaction based on it
         ret
 
-update_game:
-        call update_ball_position
 
-        ; If ball touches top of screen
-        push detect_left_edge
-        cmp byte [ ball ], 1
-        je bounce_y
-        pop rax
-
-        ; If ball touches bottom of screen
-        push detect_left_edge
-        cmp byte [ ball ], (SCREEN_HEIGHT - 1)
-        je bounce_y
-        pop rax
-
+; Detect if ball got on the right edge of the screen
 detect_left_edge:
         ; If ball touches left of screen
-        push detect_right_edge
         cmp byte [ ball + 1 ], 1
         je test_touches_left
-        pop rax
+        ret
 
+
+; Detect if ball got on the left edge of the screen
 detect_right_edge:
         ; If ball touches right of screen
         cmp byte [ ball + 1 ], (SCREEN_WIDTH - 1)
         je test_touches_right
         ret
+
+
+update_game:
+        call update_ball_position
+
+        call detect_left_edge
+        call detect_right_edge
+
+        ; If ball touches top of screen
+        cmp byte [ ball ], 1
+        je bounce_y
+
+        ; If ball touches bottom of screen
+        cmp byte [ ball ], (SCREEN_HEIGHT - 1)
+        je bounce_y
+
+        ret
+
 
 erase_prev_screen:
         push rax
