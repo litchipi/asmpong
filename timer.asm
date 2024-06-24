@@ -5,12 +5,13 @@ wait_forever:
         push rdx
         push rsi
 
+wait_forever_loop:
         ; Pause syscall, wait for new signals
         mov rax, 34
         syscall
 
         cmp byte [ ASK_EXIT ], 1
-        jl wait_forever
+        jl wait_forever_loop
 
         pop rsi
         pop rdx
