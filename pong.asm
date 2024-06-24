@@ -259,19 +259,25 @@ update_game:
 ; Reset the game field after a point was scored
 reset_after_point:
         push rax
+        push rbx
 
         mov al, byte [ score_left ]
         add al, byte [ score_right ]
-        and al, 0x03
-        ; TODO        Use this 2 bits to set the direction to use
+        mov bl, al
+        and bl, 0x01
+        mov byte [ direction ], bl
+
+        mov bl, al
+        and bl, 0x02
+        shr bl, 1
+        mov byte [ direction + 1 ], bl
 
         mov byte [ ball ], INIT_BALL_Y
         mov byte [ ball + 1 ], INIT_BALL_X
-        mov byte [ direction ], 1
-        mov byte [ direction + 1 ], 0
         mov byte [ bar_left ], INIT_BAR_Y
         mov byte [ bar_right ], INIT_BAR_Y
 
+        pop rbx
         pop rax
         ret
 
