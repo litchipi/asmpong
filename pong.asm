@@ -6,7 +6,7 @@ section .bss
 
 section .data
         ball: db INIT_BALL_Y, INIT_BALL_X   ; [ y, x ]
-        direction: db 1, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
+        direction: db 0, 0    ; [ horiz, vert ] -> [ E=1 / W=0, S=1 / N=0 ]
 
         bar_left: db INIT_BAR_Y
         bar_right: db INIT_BAR_Y
@@ -38,6 +38,12 @@ section .rodata
         USR1_DOWN_CHAR equ 's'
         USR2_UP_CHAR equ 'p'
         USR2_DOWN_CHAR equ 'm'
+
+        LEFT_MSG db "Player 1:"
+        left_msg_len equ $ - LEFT_MSG
+
+        RIGHT_MSG db "Player 2:"
+        right_msg_len equ $ - RIGHT_MSG
 
 section .text
 global _start
@@ -400,26 +406,43 @@ draw_ball:
 ; Draw the informations at the top of the screen
 draw_top_bar:
         push rax
+        push rsi
+        push rdi
 
-        ; TODO        Write the score for each player
+        call erase_line
+
+        mov rsi, LEFT_MSG
+        mov rdx, left_msg_len
+        call print
+
+        mov rax, 1
+        mov rbx, ( left_msg_len + 2 )
+        call move_cursor
 
         mov rax, 0
         mov al, [ score_left ]
-        call erase_line
         call print_number
-        call newline
+
+        mov rbx, ( SCREEN_WIDTH - 6)
+        mov rax, right_msg_len
+        sub rbx, rax
+        mov rax, 1
+        call move_cursor
+
+        mov rsi, RIGHT_MSG
+        mov rdx, right_msg_len
+        call print
+
+        mov rax, 1
+        mov rbx, ( SCREEN_WIDTH - 4 )
+        call move_cursor
 
         mov rax, 0
         mov al, [ score_right ]
-        call erase_line
         call print_number
-        call newline
 
-        mov rdx, 1
-        mov rsi, char_inp
-        call print
-        call newline
-
+        pop rdi
+        pop rsi
         pop rax
         ret
 
