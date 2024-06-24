@@ -80,6 +80,11 @@ react_finish:
         ret
 
 
+; Ask the program to end, and return normally
+ask_exit_program:
+        call ask_exit
+        jmp get_input_exit
+
 ; Function get_input
 get_input:
         push rax
@@ -95,11 +100,12 @@ get_input:
         syscall
 
         cmp byte [ char_inp ], EXIT_CHAR
-        je exit_program
+        je ask_exit_program
 
         call react_input
         mov byte [ char_inp ], ' '
 
+get_input_exit:
         pop rdx
         pop rsi
         pop rdi
@@ -413,6 +419,7 @@ exit_program:
         call restore_term
         call clear
 
+syscall_exit:
         ; Syscall exit
         mov rax, 60
         mov rdi, 0
