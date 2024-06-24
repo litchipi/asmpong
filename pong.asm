@@ -39,30 +39,50 @@ usr1_up:
         dec byte [ bar_left ]
         ret
 
+usr1_test_up:
+        cmp byte [ bar_left ], 1
+        jg usr1_up
+        ret
+
 usr1_down:
         inc byte [ bar_left ]
+        ret
+
+usr1_test_down:
+        cmp byte [ bar_left ], SCREEN_HEIGHT
+        jl usr1_down
         ret
 
 usr2_up:
         dec byte [ bar_right ]
         ret
 
+usr2_test_up:
+        cmp byte [ bar_right ], 1
+        jg usr2_up
+        ret
+
 usr2_down:
         inc byte [ bar_right ]
         ret
 
+usr2_test_down:
+        cmp byte [ bar_right ], SCREEN_HEIGHT
+        jl usr2_down
+        ret
+
 react_input:
         cmp byte [ char_inp ], USR1_UP_CHAR
-        je usr1_up
+        je usr1_test_up
 
         cmp byte [ char_inp ], USR1_DOWN_CHAR
-        je usr1_down
+        je usr1_test_down
 
         cmp byte [ char_inp ], USR2_UP_CHAR
-        je usr2_up
+        je usr2_test_up
 
         cmp byte [ char_inp ], USR2_DOWN_CHAR
-        je usr2_down
+        je usr2_test_down
         ret
 
 get_input:
